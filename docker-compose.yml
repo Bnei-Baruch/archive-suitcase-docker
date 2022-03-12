@@ -1,0 +1,147 @@
+version: "3.7"
+
+x-logging:
+  &default-logging
+  options:
+    max-size: '12m'
+    max-file: '5'
+  driver: json-file
+
+services:
+  nginx:
+    build: ./nginx
+    restart: unless-stopped
+    volumes:
+      - nginx_data:/data
+      - kmedia_build:/sites/archive-frontend:ro
+      - admin_ui_build:/sites/admin:ro
+      - assets:/sites/assets:ro
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - archive_backend
+      - mdb_links
+      - assets_api
+      - kmedia_mdb
+      - imaginary
+  postgres_mdb:
+    image: postgres:9.6
+    restart: unless-stopped
+    volumes:
+      - pg_data:/var/lib/postgresql/data/pg_data
+      - backup:/backup
+    networks:
+      - backend
+    command: -N 200
+    environment:
+      POSTGRES_PASSWORD: ${MDB_POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pg_data
+      MDB_USER: ${MDB_USER}
+      MDB_PASSWORD: ${MDB_PASSWORD}
+  elastic:
+    build: ./elastic
+    restart: unless-stopped
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+      - backup:/backup
+    networks:
+      - backend
+    ports:
+      - "9200:9200"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - path.repo=/backup/elastic
+      - ES_JAVA_OPTS=${ELASITC_JAVA_OPTS}
+  archive_backend:
+    image: bneibaruch/archive_backend:${ARCHIVE_BACKEND_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./config/archive_backend.toml:/app/config.toml
+      - assets:/assets
+    networks:
+      - frontend
+      - backend
+    logging: *default-logging
+    depends_on:
+      - postgres_mdb
+      - elastic
+    environment:
+      MDB_URL: postgres://${MDB_USER}:${MDB_PASSWORD}@postgres_mdb/mdb?sslmode=disable
+    command: ["/wait-for", "postgres_mdb:5432", "--", "/wait-for", "elastic:9200", "--timeout=60", "--", "./archive-backend", "server"]
+  mdb_links:
+    image: bneibaruch/mdb_links:${MDB_LINKS_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./config/mdb-links.toml:/app/config.toml
+    networks:
+      - frontend
+      - backend
+    logging: *default-logging
+    depends_on:
+      - postgres_mdb
+    environment:
+      MDB_URL: postgres://${MDB_USER}:${MDB_PASSWORD}@postgres_mdb/mdb?sslmode=disable
+    command: ["/wait-for", "postgres_mdb:5432", "--", "./mdb-links", "server"]
+  assets_api:
+    image: bneibaruch/assets_api:${ASSETS_API_VERSION}
+    restart: unless-stopped
+    volumes:
+      - assets:/assets
+    networks:
+      - frontend
+      - backend
+    logging: *default-logging
+    depends_on:
+      - postgres_mdb
+      - mdb_links
+    environment:
+      BASE_DIR: /assets/generated
+      MDB_URL: postgres://${MDB_USER}:${MDB_PASSWORD}@postgres_mdb/mdb?sslmode=disable
+      MDB_POOL_SIZE: 8
+      LINKER_URL: http://mdb_links:8081/
+    command: ["/wait-for", "postgres_mdb:5432", "--", "uwsgi", "--show-config"]
+  kmedia_mdb:
+    image: bneibaruch/kmedia_mdb:suitcase-${KMEDIA_MDB_VERSION}
+    restart: unless-stopped
+    volumes:
+      - kmedia_build:/build_copy
+    networks:
+      - frontend
+    ports:
+      - "3001"
+    logging: *default-logging
+  admin_ui:
+    image: bneibaruch/mdb_admin:suitcase-${MDB_ADMIN_VERSION}
+    volumes:
+      - admin_ui_build:/build_copy
+  imaginary:
+    image: h2non/imaginary:1.1.0
+    restart: unless-stopped
+    networks:
+      - frontend
+    logging: *default-logging
+    environment:
+      PORT: 8082
+    command: -cors -concurrency 20 -enable-url-source nginx,kabbalahmedia.info,*.kabbalahmedia.info
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  nginx_data:
+  pg_data:
+  elastic_data:
+  assets:
+  kmedia_build:
+  admin_ui_build:
+  backup:
+

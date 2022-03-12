@@ -1,0 +1,27 @@
+version: "3.7"
+
+x-logging:
+  &default-logging
+  options:
+    max-size: '12m'
+    max-file: '5'
+  driver: json-file
+
+services:
+  sync:
+    build: ./sync
+    restart: no
+    volumes:
+      - assets:/data/assets
+      - backup:/data/backup
+      - /mnt/storage:/data/raid
+      - ./sync/ssh:/home/syncer/.ssh
+    logging: *default-logging
+
+volumes:
+  assets:
+    external:
+      name: archive-docker_assets
+  backup:
+    external:
+      name: archive-docker_backup

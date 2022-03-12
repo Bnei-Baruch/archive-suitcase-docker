@@ -1,0 +1,6 @@
+# Sync MDB and Elasticsearch
+30 0 * * * root <INSTALL_DIR>/host/backup_restore.sh
+
+## make sure mdb-fs index is always fresh in filer
+#*/5 * * * * root rsync -ac /mnt/storage/mdb_files/index /sites/filer/indexes
+
