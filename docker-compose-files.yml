@@ -1,0 +1,41 @@
+version: "3.7"
+
+x-logging:
+  &default-logging
+  options:
+    max-size: '12m'
+    max-file: '5'
+  driver: json-file
+
+services:
+  filer:
+    image: bneibaruch/filer_backend:${FILER_BACKEND_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./config/filer_storage.conf:/etc/filer_storage.conf
+      - ${RAID_PATH}/index:/indexes/index
+      - ${RAID_PATH}:${RAID_PATH}:ro
+    networks:
+      - backend
+    logging: *default-logging
+  mdb_fs:
+    image: bneibaruch/mdb_fs:${MDB_FS_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./config/mdb-fs.toml:/app/config.toml
+    networks:
+      - backend
+    logging: *default-logging
+    depends_on:
+      - postgres_mdb
+    environment:
+      ROOT_DIR: ${RAID_PATH}
+      MDB_URL: postgres://${MDB_USER}:${MDB_PASSWORD}@postgres_mdb/mdb?sslmode=disable
+      ORIGINS: http://files.bbdomain.org,https://files.kabbalahmedia.info
+      FETCHERS: 2
+      INDEX_WORKERS: 3
+      SUITCASE_ID: ${SUITCASE_ID}
+
+networks:
+  frontend:
+  backend:

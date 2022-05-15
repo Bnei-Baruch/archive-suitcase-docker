@@ -1,4 +1,4 @@
-# Docker-Compose Archive
+# BB Archive box (suitcase)
 This is how we setup and deploy the services composing the archive in suitcase mode.
 
 Checkout the [normal mode installation](https://github.com/bnei-Baruch/archive-docker) 
@@ -50,9 +50,9 @@ traffic into the suitcase.
 To do that you'll have to also change configuration of a few archive parts. See next part.
 
 
-### Changing Domains
+#### Changing Domains
 
-Changing the domain name of the suitcase instance requires changing comfiguration of various components:
+Changing the domain name of the suitcase instance requires changing configuration of various components:
 * nginx config files
 * service config files
 * CI server suitcase jobs
@@ -62,3 +62,5 @@ Once these are changed correctly, users have to setup their `/etc/hosts` file ac
 **nginx** Each nginx config files under `/etc/nginx/conf.d` must change its `server_name` directive to the new domain.
 
 **TODO:** more details regarding the other two should follow
+**TODO:** UI apps (react) public site + admin UI should have dynamic config. 
+If not, under DR circumstances we'll need a rebuild in CI with new domains.
