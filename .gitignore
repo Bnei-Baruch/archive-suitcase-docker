@@ -1,2 +1,5 @@
 .idea/
 .env
+
+sync/ssh/*
+!sync/ssh/config

@@ -10,12 +10,12 @@ x-logging:
 services:
   sync:
     build: ./sync
-    restart: no
+    restart: 'no'
     volumes:
       - assets:/data/assets
       - backup:/data/backup
       - /mnt/storage:/data/raid
-      - ./sync/ssh:/home/syncer/.ssh
+      - ./sync/ssh:/root/.ssh
     logging: *default-logging
 
 volumes:

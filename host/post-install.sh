@@ -14,20 +14,10 @@ ssh-keygen -t ed25519 -f sync/ssh/id_ed25519 -C "suitcase@bbdomain.org"
 echo "copy sync/ssh/id_ed25519.pub to production sync server"
 cat sync/ssh/id_ed25519.pub
 
-# setup ssh config
-cat <<-EOT >> ~/.ssh/config
-Host production-archive
-	HostName 10.103.1.51
-	User syncer
-	Port 2222
-EOT
-
-
 
 # bring up services
 docker-compose -f docker-compose.yml -f docker-compose-oneoff.yml pull
 docker-compose up -d
-
 
 
 # Setup elastic backup

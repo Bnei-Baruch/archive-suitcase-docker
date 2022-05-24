@@ -6,7 +6,8 @@ RUN apk update && \
     apk upgrade && \
     apk add --no-cache \
         openssh-client \
-        rsync && \
+        rsync \
+        gzip && \
     rm -rf /var/cache/apk/*
 
 VOLUME ["/data"]
