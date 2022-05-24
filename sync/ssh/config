@@ -1,0 +1,6 @@
+Host production-archive
+	HostName het1.kbb1.com
+	User syncer
+	Port 2222
+	IdentityFile /root/.ssh/id_ed25519
+	StrictHostKeyChecking no
