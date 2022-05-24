@@ -33,8 +33,16 @@ curl -XPUT 'http://localhost:9200/_snapshot/backup' -H 'Content-Type: applicatio
 # sync backup from production and restore
 host/backup_restore.sh
 
+# skip this section if no public domain is ready
+echo "modify public access domain if not default 'archive'"
+  # nginx archive.conf -> location /mdb-api/  -> proxy_redirect + allow access (comment on allow / deny)
+  # nginx cdn.archive.conf -> server_name
+  # config/archive-ssr.env
+  # config/mdb-links.toml (also need filer url)
+  # ensure frontend builds (kmedia-mdb, mdb-admin) for this domain
 
-echo "Prefix base-url in mdb_links config.toml environment (if not production)"
+git checkout -b local
+git commit -am "local modifications"
 
 # re-run everything
 docker-compose -f docker-compose.yml up -d

@@ -16,6 +16,7 @@ echo "start services"
 docker-compose start
 
 echo "restore elastic"
+sleep 10s
 curl -XPOST localhost:9200/_all/_close
 sleep 5s
 curl -XPOST localhost:9200/_snapshot/backup/full/_restore
